@@ -1,12 +1,20 @@
 from CleWin_cif_creator import load_cif, write_to_cif, CleWin_layer
 from example import example_layers
 
-def aligned_example():
+def get_shifted_alignment_mark(x_shift, y_shift, alignment_mark_layer_index):
     alignment_mark_filename = "centered_alignment_mark"
     alignment_mark_layers: list[CleWin_layer] = load_cif(filename = alignment_mark_filename)
-    alignement_mark_metalization = alignment_mark_layers[0]
-    alignement_mark_etch = alignment_mark_layers[1]
 
+    # get desired layer
+    alignement_mark: CleWin_layer = alignment_mark_layers[alignment_mark_layer_index]
+
+    # shift the entire layer by the desired amount
+    alignement_mark.shift(shift_x_nm=x_shift, shift_y_nm=y_shift)
+
+    # return list of shapes
+    return alignement_mark.shapes
+
+def aligned_example():
     hello_world_layers: list[CleWin_layer] = example_layers()
     metalization_layer = hello_world_layers[0]
     etch_layer = hello_world_layers[1]
@@ -17,26 +25,22 @@ def aligned_example():
                                 [-10e6,-10e6]]
 
     for alignment_mark_position in alignment_mark_positions:
-        shift_x = alignment_mark_position[0]
-        shift_y = alignment_mark_position[1]
+        # get shapes from above function
+        metalization_alignement_mark_shapes = get_shifted_alignment_mark(
+            x_shift=alignment_mark_position[0],
+            y_shift=alignment_mark_position[1],
+            alignment_mark_layer_index=0
+        )
+        etch_alignement_mark_shapes = get_shifted_alignment_mark(
+            x_shift=alignment_mark_position[0],
+            y_shift=alignment_mark_position[1],
+            alignment_mark_layer_index=1
+        )
+
+        # add shapes to desired layers
+        metalization_layer.shapes.extend(metalization_alignement_mark_shapes)
+        etch_layer.shapes.extend(etch_alignement_mark_shapes)
         
-        # for each layer
-        for shape in alignement_mark_metalization.shapes:
-            # take a deep copy of each shape 
-            new_shape = shape.deepcopy()
-            # and move it to the correct position
-            new_shape.shift(shift_x_nm=shift_x, shift_y_nm=shift_y)
-            # then add it to the desired layer
-            metalization_layer.add_shape_to_layer(new_shape)
-
-        for shape in alignement_mark_etch.shapes:
-            # take a deep copy of each shape 
-            new_shape = shape.deepcopy()
-            # and move it to the correct position
-            new_shape.shift(shift_x_nm=shift_x, shift_y_nm=shift_y)
-            # then add it to the desired layer
-            etch_layer.add_shape_to_layer(new_shape)
-
         
     return [metalization_layer, etch_layer]
     
