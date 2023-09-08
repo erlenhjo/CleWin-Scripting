@@ -1,3 +1,5 @@
+import copy
+
 class CleWin_color(object):
     def __init__(self, red: int, green: int, blue:int):
         if red < 0 or red > 255:
@@ -12,7 +14,7 @@ class CleWin_color(object):
         self.blue = blue
 
     def format_color_for_CleWin(self):
-        return f"0f{format(self.red, '02x')}{format(self.green, '02x')}{format(self.blue, '02x')}"
+        return f"0f{format(self.blue, '02x')}{format(self.green, '02x')}{format(self.red, '02x')}"
 
 
 class CleWin_square(object):
@@ -24,6 +26,13 @@ class CleWin_square(object):
 
     def get_CleWin_line(self):
         return f"B {int(self.x_size_nm)} {int(self.y_size_nm)} {int(self.x_center_nm)} {int(self.y_center_nm)};\n"
+
+    def shift(self, shift_x_nm, shift_y_nm):
+        self.x_center_nm += shift_x_nm
+        self.y_center_nm += shift_y_nm
+
+    def deepcopy(self):
+        return copy.deepcopy(self)
 
 
 class Clewin_polygon(object):
@@ -39,6 +48,14 @@ class Clewin_polygon(object):
         string += ";\n"
 
         return string 
+    
+    def shift(self, shift_x_nm, shift_y_nm):
+        for n in range(len(self.points)):
+            self.points[n][0] += shift_x_nm
+            self.points[n][1] += shift_y_nm
+
+    def deepcopy(self):
+        return copy.deepcopy(self)
 
 
 class CleWin_layer(object):
@@ -71,6 +88,14 @@ class CleWin_layer(object):
             cif_content += shape.get_CleWin_line()
 
         return cif_content
+    
+    def deepcopy(self):
+        return copy.deepcopy(self)
+
+    def shift(self, shift_x_nm, shift_y_nm):
+        for shape in self.shapes:
+            shape.shift(shift_x_nm, shift_y_nm)
+
 
 
 def write_to_cif(filename, layers:list[CleWin_layer]):
@@ -128,10 +153,10 @@ def shapes_from_string(shape_strings):
     for shape_string in shape_strings:
         if shape_string[0] == "B":
             values = shape_string.split(" ")[1:]
-            x_size = values[0]
-            y_size = values[1]
-            x_center = values[2]
-            y_center = values[3]
+            x_size = int(values[0])
+            y_size = int(values[1])
+            x_center = int(values[2])
+            y_center = int(values[3])
             square = CleWin_square(
                 x_size_nm = x_size,
                 y_size_nm = y_size,
@@ -149,7 +174,7 @@ def shapes_from_string(shape_strings):
 
             points = []
             for x_coord, y_coord in zip(values[::2],values[1::2]):
-                point = [x_coord,y_coord]
+                point = [x_coord, y_coord]
                 points.append(point)
             
             polygon = Clewin_polygon(points = points)

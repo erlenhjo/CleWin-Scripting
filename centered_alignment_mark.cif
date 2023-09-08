@@ -1,9 +1,5 @@
 (CIF written by CleWin 4.1);
 (1 unit = 0.001 micron);
-(NTNU Nanolab);
-(Sem Sælandsvei 14);
-(NO 7491  Trondheim);
-(Norway);
 (Layer names:);
 L L0; (CleWin: 0 Layer 0/0f808000 0f808000);
 L L1; (CleWin: 1 Layer 1/0fe08080 0fe08080);
