@@ -9,9 +9,9 @@ class CleWin_color(object):
         if blue < 0 or blue > 255:
             raise "Color channels must have value between 0 and 255"
         
-        self.red = red
-        self.green = green
-        self.blue = blue
+        self.red = int(red)
+        self.green = int(green)
+        self.blue = int(blue)
 
     def format_color_for_CleWin(self):
         return f"0f{format(self.blue, '02x')}{format(self.green, '02x')}{format(self.red, '02x')}"
@@ -100,7 +100,7 @@ class CleWin_layer(object):
 
 def write_to_cif(filename, layers:list[CleWin_layer]):
     cif = ""
-    cif += "(CIF written by CleWin 4.1);\n"
+    cif += "(CIF written for use with CleWin 4.1);\n"
 
     cif += "(Layer names:);\n"
     for layer in layers:
