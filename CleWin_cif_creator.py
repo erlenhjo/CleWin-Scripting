@@ -46,16 +46,16 @@ class Mask_rectangle:
         -----
         x_size_nm: int
             The size of the rectangle in the x direction in nanometers
-        
+
         y_size_nm: int
             The size of the rectangle in the y direction in nanometers
 
         x_center_nm: int
             The center position of the rectangle in the x direction in nanometers
-        
+
         y_center_nm: int
             The center position of the rectangle in the y direction in nanometers
-        
+
         color: str
             The color of the rectangle in plotting. Defaults to blue. Supports hex colors.
         """
@@ -98,7 +98,7 @@ class Mask_polygon:
         """
         A polygon object mask.
         Polygons are defined by a list of points. The points are the corners of the polygon and the polygon is closed by connecting the last point to the first point.
-        The latter is assumed to be true by default (?) 
+        The latter is assumed to be true by default (?)
 
         Args:
         -----
