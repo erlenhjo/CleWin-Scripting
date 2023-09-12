@@ -326,10 +326,11 @@ class CleWin_layer(object):
             plt.show()
         return fig, ax
 
-
+      
 def write_to_cif(filename, layers: List[CleWin_layer]):
     # Needs documentation
     cif = "(Layer names:);\n"
+
     for layer in layers:
         cif += layer.get_cif_declaration()
 
