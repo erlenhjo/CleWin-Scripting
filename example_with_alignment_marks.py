@@ -3,7 +3,7 @@ from CleWin_cif_creator import (
     write_to_cif,
     CleWin_layer,
     plotLayers,
-    Mask_wire,
+    CIF_wire,
 )
 from example import example_layers
 import os
@@ -65,7 +65,6 @@ if __name__ == "__main__":
     import numpy as np
 
     aligned_layers = aligned_example()
-    write_to_cif(filename="aligned_hello_world", layers=aligned_layers)
 
     # add smiley face
     t = np.linspace(-1 / 3 * np.pi, np.pi / 3, 10)
@@ -73,15 +72,17 @@ if __name__ == "__main__":
     wire_points_smile = [
         (i, j) for i, j in zip(550_000 * np.cos(t), 550_000 * np.sin(t))
     ]
-    wire_mask = Mask_wire(points=wire_points_smile, width_nm=100e3)
+    wire_mask = CIF_wire(points=wire_points_smile, width_nm=100e3)
     wire_mask.shift(shift_x_nm=1_000_000, shift_y_nm=0)
 
-    wire_right_eye = Mask_wire(points=[(0, 0), (500_000, 0)], width_nm=100e3)
+    wire_right_eye = CIF_wire(points=[(0, 0), (500_000, 0)], width_nm=100e3)
     wire_right_eye.shift(shift_x_nm=550_000, shift_y_nm=200_000)
 
-    wire_left_eye = Mask_wire(points=[(0, 0), (500_000, 0)], width_nm=100e3)
+    wire_left_eye = CIF_wire(points=[(0, 0), (500_000, 0)], width_nm=100e3)
     wire_left_eye.shift(shift_x_nm=550_000, shift_y_nm=-200_000)
 
     aligned_layers[0].shapes.extend([wire_mask, wire_right_eye, wire_left_eye])
+
+
     plotLayers(layers=aligned_layers, window_size=(30_000_000), alpha=1)
     write_to_cif(filename="aligned_hello_world", layers=aligned_layers)

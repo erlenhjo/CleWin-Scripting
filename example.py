@@ -1,4 +1,4 @@
-from CleWin_cif_creator import CleWin_color, Mask_rectangle, CleWin_layer, write_to_cif
+from CleWin_cif_creator import CleWin_color, CIF_rectangle, CleWin_layer, write_to_cif
 
 
 def example_layers():
@@ -18,17 +18,17 @@ def example_layers():
         border_color=CleWin_color(0, 0, 255),
     )
 
-    square1 = Mask_rectangle(
+    square1 = CIF_rectangle(
         x_size_nm=200e3, y_size_nm=1000e3, x_center_nm=-800e3, y_center_nm=0
     )
-    square2 = Mask_rectangle(
+    square2 = CIF_rectangle(
         x_size_nm=200e3, y_size_nm=1000e3, x_center_nm=-400e3, y_center_nm=0
     )
 
-    square3 = Mask_rectangle(
+    square3 = CIF_rectangle(
         x_size_nm=200e3, y_size_nm=1000e3, x_center_nm=100e3, y_center_nm=0
     )
-    square4 = Mask_rectangle(
+    square4 = CIF_rectangle(
         x_size_nm=200e3, y_size_nm=200e3, x_center_nm=-600e3, y_center_nm=0
     )
 

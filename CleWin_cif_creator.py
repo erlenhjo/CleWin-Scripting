@@ -33,12 +33,12 @@ class CleWin_color:
         return f"#{format(self.red, '02x')}{format(self.green, '02x')}{format(self.blue, '02x')}"
 
 
-class Mask_rectangle:
+class CIF_rectangle:
     def __init__(
         self, x_size_nm, y_size_nm, x_center_nm, y_center_nm, color: str = "blue"
     ):
         """
-        A rectangle object mask.
+        A rectangle CIF object.
         Rectangles are defined by a size in the x and y direction and a center position in the x and y direction.
         The center position is the center of the rectangle and the size is the size of the rectangle in nanometers.
 
@@ -66,8 +66,7 @@ class Mask_rectangle:
         self.y_center_nm = y_center_nm
         self.color = color
 
-    def get_Mask_line(self):
-        # is this even a line or is it a rectangle?
+    def get_cif_content(self):
         return f"B {int(self.x_size_nm)} {int(self.y_size_nm)} {int(self.x_center_nm)} {int(self.y_center_nm)};\n"
 
     def shift(self, shift_x_nm, shift_y_nm):
@@ -93,10 +92,10 @@ class Mask_rectangle:
         return None
 
 
-class Mask_polygon:
+class CIF_polygon:
     def __init__(self, points, color: str = "blue"):
         """
-        A polygon object mask.
+        A polygon CIF object.
         Polygons are defined by a list of points. The points are the corners of the polygon and the polygon is closed by connecting the last point to the first point.
         The latter is assumed to be true by default (?)
 
@@ -112,15 +111,15 @@ class Mask_polygon:
         self.points = points
         self.color = color
 
-    def get_Mask_line(self):
-        string = "P"
+    def get_cif_content(self):
+        cif_content = "P"
         for point in self.points:
             x_coord = int(point[0])
             y_coord = int(point[1])
-            string += f" {x_coord} {y_coord}"
-        string += ";\n"
+            cif_content += f" {x_coord} {y_coord}"
+        cif_content += ";\n"
 
-        return string
+        return cif_content
 
     def shift(self, shift_x_nm, shift_y_nm):
         for n in range(len(self.points)):
@@ -136,10 +135,10 @@ class Mask_polygon:
         return None
 
 
-class Mask_wire:
+class CIF_wire:
     def __init__(self, points: List[Point], width_nm: int, color: str = "blue"):
         """
-        Create a wire object mask.
+        Create a wire CIF object.
         Wires are defined by a list of points and a width. The points are the center of the wire and the width is the width of the wire in nanometers.
         Wires run linearly between the points in the list. Edges are rounded, meaning the wire will be as if drawn using a pen with a circular tip.
 
@@ -166,10 +165,10 @@ class Mask_wire:
 
     def get_cif_content(self):
         """Create a Wire object in the cif file in the proper .CIF format"""
-        cif_content = f"W{self.width_nm}"
+        cif_content = f"W {int(self.width_nm)}"
 
         for point in self.points:
-            cif_content += f" {point[0]} {point[1]}"
+            cif_content += f" {int(point[0])} {int(point[1])}"
 
         cif_content += ";\n"
 
@@ -270,9 +269,9 @@ class CleWin_layer(object):
         self.layer_index = layer_index
         self.fill_color = fill_color
         self.border_color = border_color
-        self.shapes: List[Mask_polygon] = []  # only squares for now
+        self.shapes: List[CIF_rectangle | CIF_polygon | CIF_wire] = []
 
-    def add_shape_to_layer(self, shape: Mask_rectangle | Mask_polygon | Mask_wire):
+    def add_shape_to_layer(self, shape: CIF_rectangle | CIF_polygon | CIF_wire):
         self.shapes.append(shape)
 
     def get_cif_declaration(self):
@@ -280,7 +279,7 @@ class CleWin_layer(object):
         border_color_str = self.border_color.format_color_for_CleWin()
 
         # CleWin added because of the way the cif file is parsed by CleWin??
-        cif_declaration = f"L {self.layer_alias};\n(CleWin: {self.layer_index} {self.layer_name}/{fill_color_str} {border_color_str});\n"
+        cif_declaration = f"L {self.layer_alias}; (CleWin: {self.layer_index} {self.layer_name}/{fill_color_str} {border_color_str});\n"
 
         return cif_declaration
 
@@ -292,7 +291,7 @@ class CleWin_layer(object):
         cif_content = f"L {self.layer_alias};\n"
 
         for shape in self.shapes:
-            cif_content += shape.get_Mask_line()
+            cif_content += shape.get_cif_content()
 
         return cif_content
 
@@ -329,7 +328,9 @@ class CleWin_layer(object):
       
 def write_to_cif(filename, layers: List[CleWin_layer]):
     # Needs documentation
-    cif = "(Layer names:);\n"
+    cif = "(1 unit = 0.001 micron);\n"
+
+    cif += "(Layer names:);\n"
 
     for layer in layers:
         cif += layer.get_cif_declaration()
@@ -369,7 +370,7 @@ def load_cif(filename):
     layers = []
     # Exclude the first substring because it is not layer info
     for layer_info_string in layer_info.split("L ")[1:]:
-        layer: CleWin_layer = layer_from_cif_string(layer_info_string)
+        layer: CleWin_layer = layer_from_CleWin_string(layer_info_string)
         layers.append(layer)
 
     # Stuff that works, but I did not write
@@ -396,7 +397,7 @@ def shapes_from_string(shape_strings):
             y_size = int(values[1])
             x_center = int(values[2])
             y_center = int(values[3])
-            square = Mask_rectangle(
+            square = CIF_rectangle(
                 x_size_nm=x_size,
                 y_size_nm=y_size,
                 x_center_nm=x_center,
@@ -416,26 +417,24 @@ def shapes_from_string(shape_strings):
                 point = [x_coord, y_coord]
                 points.append(point)
 
-            polygon = Mask_polygon(points=points)
+            polygon = CIF_polygon(points=points)
             shapes.append(polygon)
 
         elif shape_string[0] == "W":
-            value_strings = shape_string.split(" ")[1:]
+            shape_string = shape_string[1:].strip(" ")
+            value_strings = shape_string.split(" ")
             values = []
             for value_string in value_strings:
                 value_string = value_string.strip("\n")
                 values.append(int(value_string))
 
-            # I think the first value (width) is not separated from W by a space, as those are the only examples I have seen
-            # Though this is not explicitly stated in the documentation, so be careful
-            # Ie. W200 100 100 200 200 200 205; is a valid wire with width 200 nm
-            width = values[0][1:]  # remove the W
+            width = values[0]
             points = []
             for x_coord, y_coord in zip(values[1::2], values[2::2]):
                 point = [x_coord, y_coord]
                 points.append(point)
 
-            wire = Mask_wire(points=points, width_nm=width)
+            wire = CIF_wire(points=points, width_nm=width)
             shapes.append(wire)
 
         else:
@@ -446,15 +445,15 @@ def shapes_from_string(shape_strings):
     return shapes
 
 
-def color_from_clewin_string(color_string):
-    red = int(f"0x{color_string[2:4]}", base=0)
+def color_from_CleWin_string(color_string):
+    blue = int(f"0x{color_string[2:4]}", base=0)
     green = int(f"0x{color_string[4:6]}", base=0)
-    blue = int(f"0x{color_string[6:8]}", base=0)
+    red = int(f"0x{color_string[6:8]}", base=0)
 
     return CleWin_color(red, green, blue)
 
 
-def layer_from_cif_string(layer_string):
+def layer_from_CleWin_string(layer_string):
     alias = layer_string.split(";")[0]
 
     layer_string = layer_string.split(";")[1]
@@ -465,8 +464,8 @@ def layer_from_cif_string(layer_string):
     name = " ".join(layer_string.split("/")[0].split(" ")[2:])
     fill_color_string = layer_string.split("/")[1].split(" ")[0]
     border_color_string = layer_string.split("/")[1].split(" ")[1]
-    fill_color = color_from_clewin_string(fill_color_string)
-    border_color = color_from_clewin_string(border_color_string)
+    fill_color = color_from_CleWin_string(fill_color_string)
+    border_color = color_from_CleWin_string(border_color_string)
 
     layer = CleWin_layer(
         layer_name=name,
@@ -481,7 +480,7 @@ def layer_from_cif_string(layer_string):
 
 def plotLayers(layers: List[CleWin_layer], window_size: int = 10_000_000, alpha=0.5):
     """
-    Shows a preview of the masks for the different layers in a matplotlib window.
+    Shows a preview of the cif objects for the different layers in a matplotlib window.
     Note that the window size is in nm as with the rest of the library (for obvious reasons)
 
     Also note that the the resulting layer will be one with alpha = 1. A lower alpha is used for the preview to
